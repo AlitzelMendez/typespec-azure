@@ -63,7 +63,7 @@ model TestTrackedProperties {
 /** Holder for private endpoint connections */
 @parentResource(TestTrackedResource)
 model PrivateEndpointConnectionResource is ProxyResource<PrivateEndpointConnectionProperties> {
-  ...PrivateEndpointConnectionName;
+  ...PrivateEndpointConnectionParameter;
 }
 
 /** Private connection operations */

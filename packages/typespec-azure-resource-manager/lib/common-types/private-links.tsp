@@ -128,7 +128,8 @@ union PrivateEndpointServiceConnectionStatus {
 /**
  * The name of the private endpoint connection associated with the Azure resource.
  */
-model PrivateEndpointConnectionName {
+@friendlyName("PrivateEndpointConnectionName")
+model PrivateEndpointConnectionParameter {
   /** The name of the private endpoint connection associated with the Azure resource. */
   @path
   @key("privateEndpointConnectionName")
