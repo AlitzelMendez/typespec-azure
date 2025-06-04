@@ -8,7 +8,7 @@ it("use Azure.Core.Page as the response", async () => {
     @service
     @useDependency(Azure.Core.Versions.v1_0_Preview_2)
     namespace Test {
-      op list(): Azure.Core.Page<{}>;
+      @list op list(): Azure.Core.Page<{}>;
     }
     `,
   );

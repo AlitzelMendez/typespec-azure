@@ -94,8 +94,7 @@ export function isFixed(program: Program, target: Enum): boolean {
   return program.stateMap(AzureCoreStateKeys.fixed).get(target) !== undefined;
 }
 
-// pagedResult
-
+/** @deprecated Use @list in the operation instead */
 export const $pagedResult: PagedResultDecorator = (context: DecoratorContext, entity: Model) => {
   context.program.stateMap(AzureCoreStateKeys.pagedResult).set(entity, true);
 };
@@ -258,6 +257,7 @@ export function getPagedResult(
   return metadata;
 }
 
+/** @deprecated Use @pageItems instead */
 export const $items: ItemsDecorator = (context: DecoratorContext, entity: ModelProperty) => {
   context.program.stateMap(AzureCoreStateKeys.items).set(entity, true);
 };
@@ -1200,6 +1200,7 @@ export const $finalOperation: FinalOperationDecorator = (
   }
 };
 
+/** @deprecated The decorator is not going to be longer supported  */
 export const $nextPageOperation: NextPageOperationDecorator = (
   context: DecoratorContext,
   entity: Operation,

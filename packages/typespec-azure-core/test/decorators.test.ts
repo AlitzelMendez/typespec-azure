@@ -1,4 +1,11 @@
-import { Enum, Interface, Model, ModelProperty, Operation } from "@typespec/compiler";
+import {
+  Enum,
+  getPagingOperation,
+  Interface,
+  Model,
+  ModelProperty,
+  Operation,
+} from "@typespec/compiler";
 import {
   BasicTestRunner,
   expectDiagnosticEmpty,
@@ -7,13 +14,13 @@ import {
 import assert, { deepStrictEqual, ok, strictEqual } from "assert";
 import { beforeEach, describe, it } from "vitest";
 import {
-  OperationLinkMetadata,
   getFinalStateOverride,
   getLongRunningStates,
   getOperationLinks,
   getPagedResult,
   getParameterizedNextLinkArguments,
   isFixed,
+  OperationLinkMetadata,
 } from "../src/decorators.js";
 import { FinalStateValue } from "../src/lro-helpers.js";
 import { createAzureCoreTestRunner } from "./test-host.js";
@@ -110,16 +117,16 @@ describe("typespec-azure-core: decorators", () => {
     });
 
     it("supports Page<T> template", async () => {
-      const { Foo } = await runner.compile(`
-        @test 
-        model Foo is Page<{}> {}
-      `);
-      const actual = getPagedResult(runner.program, Foo as Model);
-      assert(actual?.itemsProperty?.name === "value");
-      deepStrictEqual(actual?.itemsSegments, ["value"]);
+      const { list } = await runner.compile(`
+        model Foo is Page<{}>;
 
-      assert(actual?.nextLinkProperty?.name === "nextLink");
-      deepStrictEqual(actual?.nextLinkSegments, ["nextLink"]);
+        @test
+        @list op list(): Foo;
+      `);
+      const [actual] = getPagingOperation(runner.program, list as Operation);
+      assert(actual?.output.pageItems.property.name === "value");
+
+      assert(actual?.output.nextLink?.property.name === "nextLink");
     });
 
     it("supports pagedMetadata on operation with union return", async () => {
@@ -133,14 +140,12 @@ describe("typespec-azure-core: decorators", () => {
         @test
         op foo(): FooPage | FooError;
       `);
-      const actual = getPagedResult(runner.program, foo as Operation);
-      assert(actual?.itemsProperty?.name === "value");
-      deepStrictEqual(actual?.itemsSegments, ["value"]);
+      const [actual] = getPagingOperation(runner.program, foo as Operation);
+      assert(actual?.output.pageItems.property.name === "value");
 
-      assert(actual?.nextLinkProperty?.name === "nextLink");
-      deepStrictEqual(actual?.nextLinkSegments, ["nextLink"]);
+      assert(actual?.output.nextLink?.property.name === "nextLink");
 
-      assert(actual?.modelType.name === "FooPage");
+      assert(actual?.output.pageItems.property.model?.name === "FooPage");
     });
 
     it("supports pagedMetadata on operation with model return", async () => {
@@ -149,15 +154,13 @@ describe("typespec-azure-core: decorators", () => {
 
         #suppress "@azure-tools/typespec-azure-core/use-standard-operations" "This is test code."
         @test
-        op foo(): FooPage;
+        @list op foo(): FooPage;
       `);
-      const actual = getPagedResult(runner.program, foo as Operation);
-      assert(actual?.itemsProperty?.name === "value");
-      deepStrictEqual(actual?.itemsSegments, ["value"]);
+      const [actual] = getPagingOperation(runner.program, foo as Operation);
+      assert(actual?.output.pageItems.property.name === "value");
 
-      assert(actual?.nextLinkProperty?.name === "nextLink");
-      deepStrictEqual(actual?.nextLinkSegments, ["nextLink"]);
-      assert(actual?.modelType.name === "FooPage");
+      assert(actual?.output.nextLink?.property.name === "nextLink");
+      assert(actual?.output.pageItems.property.model?.name === "FooPage");
     });
 
     it("supports pagedMetadata on operation with intersected paged model return", async () => {
@@ -237,35 +240,6 @@ describe("typespec-azure-core: decorators", () => {
       deepStrictEqual(actual?.nextLinkSegments, ["nested", "nextLink"]);
 
       ok(actual?.modelType.name === "MyFooPageResult");
-    });
-
-    it("supports @nextPageOperation", async () => {
-      const code = `
-      using Rest.Resource;
-
-      model MyResource {
-        @key
-        @segment("resourceName")
-        name: string;
-      };
-
-      @test
-      interface Foo {
-        #suppress "@azure-tools/typespec-azure-core/use-standard-operations" "This is a test."
-        @route("fooPage/")
-        @get nextPage is Azure.Core.Foundations.Operation<{ nextLink: string }, Azure.Core.Page<MyResource>>;
-
-        @nextPageOperation(Foo.nextPage, { nextLink: ResponseProperty<"nextLink"> })
-        list is Azure.Core.ResourceList<MyResource>;
-      }
-      `;
-      const [result, diagnostics] = await runner.compileAndDiagnose(code);
-      expectDiagnosticEmpty(diagnostics);
-
-      const { Foo } = result as { Foo: Interface };
-
-      const pagedResult = getPagedResult(runner.program, Foo.operations.get("list")!);
-      strictEqual(pagedResult?.nextLinkOperation?.name, "nextPage");
     });
   });
 

@@ -52,7 +52,7 @@ it("template paged model", async () => {
       prop: string;
     }
 
-    op test(): TestResult;
+    @list op test(): TestResult;
   `);
 
   const sdkPackage = runner.context.sdkPackage;
@@ -72,7 +72,7 @@ it("another usage of template paged model", async () => {
       prop: string;
     }
 
-    op test(): Page<Test>;
+    @list op test(): Page<Test>;
   `);
 
   const sdkPackage = runner.context.sdkPackage;
@@ -92,7 +92,7 @@ it("paged model use template list", async () => {
       prop: string;
     }
 
-    op testTemplate<T extends {}>(): Page<T>;
+    @list op testTemplate<T extends {}>(): Page<T>;
 
     op test is testTemplate<Test>;
   `);
